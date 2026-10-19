@@ -194,12 +194,6 @@ At the time of this README update, all 16 backend tests pass and the frontend pr
 - Smart Signage does not use facial recognition or identify individuals.
 - Outbound messages and campaigns are drafts only.
 
-## Current limitations
-
-This is still a portfolio prototype, not a deployed business system. The catalogue and analytics are demo data, the vision module uses a deterministic fallback unless a separate YOLO/OpenCV worker is connected, and external CRM or messaging integrations are intentionally disabled.
-
-The next useful step would be to connect a reviewed real catalogue, add SSO and audit logging, and evaluate recommendation quality with actual sales feedback.
-
 ## Documentation
 
 - [Architecture](docs/architecture.md)
