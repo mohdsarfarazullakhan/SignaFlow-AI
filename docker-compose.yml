@@ -1,0 +1,52 @@
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: signaflow
+      POSTGRES_USER: signaflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-signaflow-local-only}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signaflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      DATABASE_URL: postgresql+psycopg://signaflow:${POSTGRES_PASSWORD:-signaflow-local-only}@database:5432/signaflow
+      VECTOR_DB_PATH: /app/vector_db
+      JWT_SECRET: ${JWT_SECRET:-replace-this-before-non-demo-use}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      GROQ_FAST_MODEL: ${GROQ_FAST_MODEL:-llama-3.1-8b-instant}
+      GROQ_REASONING_MODEL: ${GROQ_REASONING_MODEL:-llama-3.3-70b-versatile}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+      CATALOG_ALLOWED_HOSTS: ${CATALOG_ALLOWED_HOSTS:-}
+    volumes:
+      - vector_data:/app/vector_db
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
+  vector_data:
+

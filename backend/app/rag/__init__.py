@@ -1,0 +1,2 @@
+"""Local product retrieval system."""
+

@@ -1,0 +1,2 @@
+"""Controlled external integration adapters."""
+

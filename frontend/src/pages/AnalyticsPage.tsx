@@ -1,0 +1,18 @@
+import { useEffect, useState } from "react";
+import { BarChart3, Clock3, Eye, Gauge, Sparkles } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { api } from "../lib/api";
+import { ErrorState, Loading, MetricCard, PageHeader } from "../components/ui";
+
+export function AnalyticsPage() {
+  const [data, setData] = useState<any>(); const [error, setError] = useState("");
+  useEffect(() => { api("/analytics/campaigns").then(setData).catch(err => setError(err.message)); }, []);
+  if (error) return <ErrorState message={error} />; if (!data) return <Loading label="Calculating signage analytics" />;
+  const totals = data.campaigns.reduce((acc: any, row: any) => ({ impressions: acc.impressions + row.impressions, viewers: acc.viewers + row.viewers, engagement: acc.engagement + row.engagement }), { impressions: 0, viewers: 0, engagement: 0 });
+  return <><PageHeader eyebrow="PERFORMANCE INTELLIGENCE" title="Campaign & signage analytics" description="Understand what was shown, where audiences were present, and what to test next." action={<span className="data-label"><i />{data.label}</span>} />
+    <div className="metric-grid"><MetricCard label="Impressions" value={totals.impressions.toLocaleString()} detail="Simulated screen plays" icon={<BarChart3 />} /><MetricCard label="Estimated viewers" value={totals.viewers.toLocaleString()} detail="Anonymous aggregate" icon={<Eye />} /><MetricCard label="Avg. engagement" value={`${(totals.engagement / Math.max(1, data.campaigns.length)).toFixed(1)}%`} detail="ROI presence proxy" icon={<Gauge />} /><MetricCard label="Peak window" value={data.hourly.sort((a: any, b: any) => b.viewers - a.viewers)[0]?.hour || "—"} detail="Highest viewer volume" icon={<Clock3 />} /></div>
+    <div className="dashboard-grid"><section className="panel chart-panel"><div className="panel-heading"><div><span>PERFORMANCE</span><h3>Campaign engagement</h3></div></div><div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><BarChart data={data.campaigns}><CartesianGrid vertical={false} stroke="#e5e9ed" /><XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} axisLine={false} tickLine={false} /><YAxis axisLine={false} tickLine={false} /><Tooltip /><Bar dataKey="engagement" fill="#d94b55" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div></section><section className="panel chart-panel"><div className="panel-heading"><div><span>DAYPART</span><h3>Hourly audience trend</h3></div></div><div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><LineChart data={data.hourly}><CartesianGrid vertical={false} stroke="#e5e9ed" /><XAxis dataKey="hour" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} /><YAxis axisLine={false} tickLine={false} /><Tooltip /><Line type="monotone" dataKey="viewers" stroke="#14969f" strokeWidth={3} dot={{ r: 3 }} /></LineChart></ResponsiveContainer></div></section></div>
+    <section className="optimization-section"><div className="section-title"><div><div className="eyebrow">AGENTIC OPTIMIZATION</div><h2>Recommended experiments</h2><p>Evidence-backed suggestions only. No production schedule is changed automatically.</p></div></div><div className="optimization-grid">{data.optimization_recommendations.map((item: any) => <article key={item.recommendation}><div><Sparkles /><b>{item.confidence}% confidence</b></div><h3>{item.recommendation}</h3><p>{item.supporting_metrics}</p><small>{item.suggested_schedule}</small><button className="button secondary">Review experiment</button></article>)}</div></section>
+  </>;
+}
+
